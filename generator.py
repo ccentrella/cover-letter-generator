@@ -4,105 +4,195 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch, pica
 from reportlab.lib.pagesizes import letter
 import os
+import json
 
-# Application specific properties
-date = datetime.today().strftime("%m.%d.%y")
-type = input("Which format would you like to use? Supported formats are cover letter, "
-             "long, medium and short.").lower() or 'cover letter'
-company = input("What is the name of the company?\n")
+class Generator:
 
-if type == "cover letter":
-    hiring_manager = input("What is the recruiter or hiring manager's name?\n").title() or "Hiring Manager"
-    role = input("What role are you applying for?\n").title() or "Software Engineer"
-    platform = input("Where did you find this position?\n") or "website"
+    @classmethod
+    def __init__(cls):
+        cls.date = datetime.today()
+        cls.graph_data = {}
+        cls.heading_blocks = []
+        cls.body_blocks = []
+        cls.conclusion_blocks = []
+        cls.line_character = None
+        cls.title = None
 
-if type in ("cover letter", "medium"):
-    line_character = input("If you wish to use a line break character between paragraphs, enter it now.\n") or None
+    @classmethod
+    def create_document(cls):
+        type = input("Which format would you like to use? Supported formats are cover letter, "
+             "long, medium and short. Default is cover letter.\n").lower()
+        match type:
+            case 'long' | 'long summary' | 'summary long':
+                cls.prepare_long_summary()
+            case 'medium' | 'medium summary' | 'summary medium':
+                cls.prepare_medium_summary()
+            case 'short' | 'short summary' | 'summary short':
+                cls.prepare_short_summary()
+            case default:
+                cls.prepare_cover_letter()
 
-startup_input = input("Is this company a startup?\n").lower() or "no"
-startup = "yes" in startup_input or startup_input == "y"
+        cls.line_character = input("If you wish to use a line break character between paragraphs, enter it now.\n") or ''
 
-# Parse role shorthand to correct format
-match role.lower():
-    case 'se':
-        role = "Software Engineer"
-    case 'seii':
-        role = "Software Engineer II"
-    case 'seiii':
-        role = "Software Engineer III"
-    case 'sse':
-        role = 'Senior Software Engineer'
-    case 'fee':
-        role = 'Frontend Engineer'
-    case 'bee':
-        role = 'Backend Engineer'
-    case 'fsse' | 'fse':
-        role = "Full Stack Software Engineer"
+        use_file_input = input("Would you like to generate a file?\n").lower() or "no"
+        if "yes" in use_file_input or use_file_input == "y":
+            cls.write_pdf()
+        else:
+            cls.write_terminal()
 
-# Content
-# match type:
-#     case 'cover letter':
-#         content = ''
-#     case 'long':
-#     case 'medium'
-#     case 'short':
+    # Prepare using specified format        
+    @classmethod
+    def prepare_cover_letter(cls):
+        company = None
+        while not company:
+            company = input("What is the name of the company?\n")
+        hiring_manager = input("What is the recruiter or hiring manager's name?\n").title() or "Hiring Manager"
 
-# Cover letter content
-heading_1 = f"{company} Corporation"
-heading_2 = date.__str__()
-salutation = f"Dear {hiring_manager},"
-introduction = f"I am writing to apply for the {role} role advertised on your {platform}."
+        role_input = input("What role are you applying for?\n").title()
+        role = Generator.parse_role(role_input)
+        platform = input("Where did you find this position?\n") or None
 
-if not startup:
-    body_1 = f"I've long believed that technology has the power, when united with human insight, to help people, increase efficiency, and create a brighter future. {company}'s passion to create innovative products using cutting edge technology resonates with me, and with my knowledge of fundamental programming and debugging concepts, first hand experience with several technologies, and awareness of software architecture and applications, I have the necessary skills to excel in this position."
-else:
-    body_1 = "I've long believed that technology has the power, when united with human insight, to help people, increase efficiency, and create a brighter future. I'm really excited to work in a startup environment utilizing cutting-edge technologies to create innovative products that define the future of how we interact with each other. With my knowledge of machine learning and AI, first-hand experience with several frameworks and software architectures, and ability to learn new technologies in a short amount of time, I have the necessary skills to excel in this position."
+        cls.load_file('formats/cover-letter.json')
 
-body_2 = "I have more than 12 months of relevant experience in software and web development, and as a Computer Science Graduate, I gained valuable experience in working on personal apps and web development projects in the last 5 years. Furthermore, I've worked with various AWS technologies including EC2 and Cloud9, and am familiar with their machine learning offerings. My experience so far, combined with my academic and technical knowledge, make me a suitable candidate for the role."
-body_3 = "I finished building independently 10+ websites and applications so far, which motivated me to learn further, work harder, and helped me to significantly improve my planning, coding, and problem-solving skills, as well as my work in databases, on different platforms, and in different programming languages."
-body_4 = "My most recent successful web project was the HR case study for IBM that included dozens of features."
-body_5=f"As these few accomplishments show, I am not only fond of the software development that I do, but I take great pride in it, as well. If given a chance to become a {role} at {company}, I will bring that same work ethic and motivation." 
-body_6 = "I also believe that my engagement would make it a much shorter learning curve than usual and that I could achieve even better results at your company."
+        heading_1 = f'{company} {cls.graph_data["heading"]}'
+        heading_2 = cls.date.strftime("%m.%d.%y")
 
-closing_1 = f"I would welcome the chance to discuss your upcoming projects and plans and show you how my previous achievements can be replicated and improved at {company}."
-closing_2 = "Looking forward to speaking with you."
-signature_1 = "Sincerely,"
-signature_2 = "Christopher Centrella"
+        salutation = f'{cls.graph_data["salutation"]} {hiring_manager},'
 
-# Convert to PDF
-title = f'cover_letter_cc_{company.lower()}_{date}.pdf'
-doc = SimpleDocTemplate(title, pagesize=letter, bottomMargin = 0.75 * inch)
-Story = [Spacer(1,0*inch)]
-style = getSampleStyleSheet()['BodyText']
-style.fontSize = 11
-style.leading = 14
-style.spaceAfter = 0.75 * pica
+        if platform is None:
+            body_1 = f'{cls.graph_data["body"]["line1"]["part1"]} {role} {cls.graph_data["body"]["line1"]["part2"]} {company}.'
+        else:
+            body_1 = f'{cls.graph_data["body"]["line1"]["part1"]} {role} {cls.graph_data["body"]["line1"]["part2"]} {company},'
+            f'which I found on {platform}.'
+        body_2 = f'{cls.graph_data["body"]["line2"]["part1"]} {role}, {cls.graph_data["body"]["line2"]["part2"]}'
+        body_3 = f'{cls.graph_data["body"]["line3"]}'
+        body_4 = f'{cls.graph_data["body"]["line4"]}'
+        body_5 = f'{cls.graph_data["body"]["line5"]}'
+        body_6 = f'{cls.graph_data["body"]["line6"]["part1"]} {company} {cls.graph_data["body"]["line6"]["part2"]}'
 
-heading_blocks = [heading_1, heading_2]
-body_blocks = [salutation, introduction, body_1, body_2, body_3, body_4, body_5, body_6, closing_1, closing_2]
-conclusion_blocks = [signature_1, signature_2]
+        complimentary_close_1 = f'{cls.graph_data["complimentaryClose"]["line1"]}'
+        complimentary_close_2 = f'{cls.graph_data["complimentaryClose"]["line2"]}'
 
-# Add content to file
-for block in heading_blocks:
-    p = Paragraph(block, style)
-    Story.append(p)
-Story.append(Spacer(1, 1*pica))
+        signature = f'{cls.graph_data["signature"]}'
 
-style.spaceAfter = 1.25 * pica
-for block in body_blocks:
-    p = Paragraph(block, style)
-    Story.append(p)
-    if line_character != None:
-        Story.append(Paragraph(line_character))
-Story.append(Spacer(1, 1*pica))
+        cls.heading_blocks = [heading_1, heading_2]
+        cls.body_blocks = [salutation, body_1, body_2, body_3, body_4, body_5, body_6, complimentary_close_1, complimentary_close_2]
+        cls.conclusion_blocks = [signature]
+        cls.title = f'cover_letter_cc_{company.lower()}_{cls.date.strftime("%m.%d.%y")}.pdf'
+    
+    @classmethod
+    def prepare_long_summary(cls):
+        role_input = input("What role are you applying for?\n").title()
+        role = Generator.parse_role(role_input)
 
-style.spaceAfter = 0.75 * pica
-for block in conclusion_blocks:
-    p = Paragraph(block, style)
-    Story.append(p)
+        cls.load_file('formats/summary-long.json')
+        body_1 = f'{cls.graph_data["body"]["line1"]["part1"]} {role}, {cls.graph_data["body"]["line1"]["part2"]}'
+        body_2 = f'{cls.graph_data["body"]["line2"]}'
+        body_3 = f'{cls.graph_data["body"]["line3"]}'
+        body_4 = f'{cls.graph_data["body"]["line4"]}'
 
-doc.build(Story)
+        cls.body_blocks = [body_1, body_2, body_3, body_4]
+        cls.title = f'summary_long_cc_{cls.date.isoformat()}.pdf'
+    
+    @classmethod
+    def prepare_medium_summary(cls):
+        cls.load_file('formats/summary-medium.json')
+        content = f'{cls.graph_data["body"]["line1"]}'
+        
+        cls.body_blocks = [content]   
+        cls.title = f'summary_medium_cc_{cls.date.isoformat()}.pdf'
+    
+    @classmethod
+    def prepare_short_summary(cls):
+        cls.load_file('formats/summary-short.json')
+        content = f'{cls.graph_data["body"]["line1"]}'
+        
+        cls.body_blocks = [content]
+        cls.title = f'summary_short_cc_{cls.date.isoformat()}.pdf'
 
-path = os.path.join(os.getcwd(), title)
-print(f"Created successfully: {path}\n")
-print(f"Details: role = {role}, company = {company}, platform = {platform}, startup = {startup}, hiring manager = {hiring_manager}\n")
+    @staticmethod
+    def parse_role(role):
+        if not role:
+            return "Software Engineer"
+        
+        match role.lower():
+            case 'se':
+                return "Software Engineer"
+            case 'seii':
+                return "Software Engineer II"
+            case 'seiii':
+                return "Software Engineer III"
+            case 'sse':
+                return 'Senior Software Engineer'
+            case 'fee':
+                return 'Frontend Engineer'
+            case 'bee':
+                return 'Backend Engineer'
+            case 'fsse' | 'fse':
+                return "Full Stack Software Engineer"
+            case default:
+                return role
+    
+    @classmethod
+    def load_file(cls, file_location):
+        with open(file_location, 'r') as file:
+            data = file.read()
+            cls.graph_data = json.loads(data)
+   
+    # Output document
+    @classmethod
+    def write_pdf(cls):
+
+        # Initialize PDF document
+        doc = SimpleDocTemplate(cls.title, pagesize=letter, bottomMargin = 0.75 * inch)
+        Story = [Spacer(1,0*inch)]
+        style = getSampleStyleSheet()['BodyText']
+        style.fontSize = 11
+        style.leading = 14
+        style.spaceAfter = 0.75 * pica
+
+        # Add content to file
+        for block in cls.heading_blocks:
+            p = Paragraph(block, style)
+            Story.append(p)
+        Story.append(Spacer(1, 1*pica))
+
+        style.spaceAfter = 1.25 * pica
+        for block in cls.body_blocks:
+            p = Paragraph(block, style)
+            Story.append(p)
+            Story.append(Paragraph(cls.line_character))
+        Story.append(Spacer(1, 1*pica))
+
+        style.spaceAfter = 0.75 * pica
+        for block in cls.conclusion_blocks:
+            p = Paragraph(block, style)
+            Story.append(p)
+
+        doc.build(Story)
+
+        path = os.path.join(os.getcwd(), cls.title)
+        print(f"Created successfully: {path}\n")
+    
+    @classmethod
+    def write_terminal(cls):
+        for block in cls.heading_blocks:
+            print(block)
+            print(cls.line_character)
+        if len(cls.heading_blocks) > 0:
+            print()
+
+        for block in cls.body_blocks:
+            print(block)
+            print(cls.line_character)
+        print()
+
+        for block in cls.conclusion_blocks:
+            print(block)
+            print(cls.line_character)
+        if len(cls.conclusion_blocks) > 0:
+            print()
+
+# Start Generator
+generator = Generator()
+generator.create_document()

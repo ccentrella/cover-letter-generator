@@ -22,25 +22,37 @@ class Generator:
 
     @classmethod
     def create_document(cls):
+        create_pdf = False
         type = input("Which format would you like to use? Supported formats are cover letter, "
              "long summary, medium summary and short summary. Default is long summary.\n").lower()
         match type:
-            case 'cover' | 'cover letter' | 'letter':
+            case 'c' | 'cl'| 'l' | 'cover' | 'cover letter' | 'letter':
                 cls.prepare_cover_letter()
-            case 'short' | 'short summary' | 'summary short':
+                create_pdf = True
+            case 's' | 'ss' | 'short' | 'short summary' | 'summary short':
                 cls.prepare_short_summary()
-            case 'medium' | 'medium summary' | 'summary medium':
+            case 'm' | 'ms' | 'sm' | 'medium' | 'medium summary' | 'summary medium':
                 cls.prepare_medium_summary()
             case default:
                 cls.prepare_long_summary()
 
         cls.line_character = input("Optional: If you wish to use a line break character between paragraphs, enter it now.\n") or ''
 
-        use_file_input = input("Optional: If you wish to generate a pdf, enter yes.\n").lower()
-        cls.write_terminal()
-        if "yes" in use_file_input or use_file_input == "y":
-            cls.write_pdf()
+        if create_pdf:
+            create_pdf_text = "Optional: Enter no to prevent generating a pdf.\n"
+        else:
+            create_pdf_text = "Optional: Enter yes to generate a pdf.\n"
+        create_pdf_input = input(create_pdf_text).lower()
+        if "yes" in create_pdf_input or create_pdf_input == "y":
+            create_pdf = True
+        elif "no" in create_pdf_input or create_pdf_input == "n":
+            create_pdf = False
 
+        os.system('clear')
+        cls.write_terminal()
+
+        if create_pdf:
+            cls.write_pdf()
 
     # Prepare using specified format        
     @classmethod

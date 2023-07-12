@@ -3,6 +3,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch, pica
 from reportlab.lib.pagesizes import letter
+import shutil
 import os
 import json
 
@@ -21,24 +22,24 @@ class Generator:
     @classmethod
     def create_document(cls):
         type = input("Which format would you like to use? Supported formats are cover letter, "
-             "long, medium and short. Default is cover letter.\n").lower()
+             "long summary, medium summary and short summary. Default is long summary.\n").lower()
         match type:
-            case 'long' | 'long summary' | 'summary long':
-                cls.prepare_long_summary()
-            case 'medium' | 'medium summary' | 'summary medium':
-                cls.prepare_medium_summary()
+            case 'cover' | 'cover letter' | 'letter':
+                cls.prepare_cover_letter()
             case 'short' | 'short summary' | 'summary short':
                 cls.prepare_short_summary()
+            case 'medium' | 'medium summary' | 'summary medium':
+                cls.prepare_medium_summary()
             case default:
-                cls.prepare_cover_letter()
+                cls.prepare_long_summary()
 
-        cls.line_character = input("If you wish to use a line break character between paragraphs, enter it now.\n") or ''
+        cls.line_character = input("Optional: If you wish to use a line break character between paragraphs, enter it now.\n") or ''
 
-        use_file_input = input("Would you like to generate a file?\n").lower() or "no"
+        use_file_input = input("Optional: If you wish to generate a pdf, enter yes.\n").lower()
+        cls.write_terminal()
         if "yes" in use_file_input or use_file_input == "y":
             cls.write_pdf()
-        else:
-            cls.write_terminal()
+
 
     # Prepare using specified format        
     @classmethod
@@ -46,11 +47,11 @@ class Generator:
         company = None
         while not company:
             company = input("What is the name of the company?\n")
-        hiring_manager = input("What is the recruiter or hiring manager's name?\n").title() or "Hiring Manager"
+        hiring_manager = input("Optional: What is the recruiter or hiring manager's name?\n").title() or "Hiring Manager"
 
-        role_input = input("What role are you applying for?\n").title()
+        role_input = input("Optional: What role are you applying for?\n").title()
         role = Generator.parse_role(role_input)
-        platform = input("Where did you find this position?\n") or None
+        platform = input("Optional: Where did you find this position?\n") or None
 
         cls.load_file('formats/cover-letter.json')
 
@@ -70,19 +71,18 @@ class Generator:
         body_5 = f'{cls.graph_data["body"]["line5"]}'
         body_6 = f'{cls.graph_data["body"]["line6"]["part1"]} {company} {cls.graph_data["body"]["line6"]["part2"]}'
 
-        complimentary_close_1 = f'{cls.graph_data["complimentaryClose"]["line1"]}'
-        complimentary_close_2 = f'{cls.graph_data["complimentaryClose"]["line2"]}'
+        complimentary_close = f'{cls.graph_data["complimentaryClose"]}'
 
         signature = f'{cls.graph_data["signature"]}'
 
         cls.heading_blocks = [heading_1, heading_2]
-        cls.body_blocks = [salutation, body_1, body_2, body_3, body_4, body_5, body_6, complimentary_close_1, complimentary_close_2]
+        cls.body_blocks = [salutation, body_1, body_2, body_3, body_4, body_5, body_6, complimentary_close]
         cls.conclusion_blocks = [signature]
         cls.title = f'cover_letter_cc_{company.lower()}_{cls.date.strftime("%m.%d.%y")}.pdf'
     
     @classmethod
     def prepare_long_summary(cls):
-        role_input = input("What role are you applying for?\n").title()
+        role_input = input("Optional: What role are you applying for?\n").title()
         role = Generator.parse_role(role_input)
 
         cls.load_file('formats/summary-long.json')
@@ -142,8 +142,14 @@ class Generator:
     # Output document
     @classmethod
     def write_pdf(cls):
+        # Ensure clear separation from previous operation=
+        terminal_length, _ = shutil.get_terminal_size((80, 20))
+        for _ in range(terminal_length):
+            print('-', end='')
+        print('\n')
+        print('Creating pdf...')
 
-        # Initialize PDF document
+        # Initialize pdf document
         doc = SimpleDocTemplate(cls.title, pagesize=letter, bottomMargin = 0.75 * inch)
         Story = [Spacer(1,0*inch)]
         style = getSampleStyleSheet()['BodyText']
@@ -172,10 +178,14 @@ class Generator:
         doc.build(Story)
 
         path = os.path.join(os.getcwd(), cls.title)
-        print(f"Created successfully: {path}\n")
+        print(f"Created pdf successfully: {path}\n")
     
     @classmethod
     def write_terminal(cls):
+        print("Outputting to terminal...\n")
+        os.system('clear')
+        print()
+
         for block in cls.heading_blocks:
             print(block)
             print(cls.line_character)

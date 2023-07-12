@@ -148,18 +148,14 @@ class Generator:
     
     @classmethod
     def load_file(cls, file_location):
-        with open(file_location, 'r') as file:
+        with open(file_location, 'r', encoding="utf-8") as file:
             data = file.read()
             cls.graph_data = json.loads(data)
    
     # Output document
     @classmethod
     def write_pdf(cls):
-        # Ensure clear separation from previous operation=
-        terminal_length, _ = shutil.get_terminal_size((80, 20))
-        for _ in range(terminal_length):
-            print('-', end='')
-        print('\n')
+        Generator.print_line()
         print('Creating pdf...')
 
         # Initialize pdf document
@@ -198,6 +194,7 @@ class Generator:
     @classmethod
     def write_terminal(cls):
         print("Outputting to terminal...\n")
+        Generator.print_line()
         os.system('clear')
         print()
 
@@ -217,6 +214,13 @@ class Generator:
             print(cls.line_character)
         if len(cls.conclusion_blocks) > 0:
             print()
+
+    @staticmethod
+    def print_line():
+        terminal_length, _ = shutil.get_terminal_size((40, 20))
+        for _ in range(terminal_length):
+            print('-', end='')
+        print('\n')
 
 # Start Generator
 generator = Generator()

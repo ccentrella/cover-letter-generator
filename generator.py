@@ -5,6 +5,7 @@ from reportlab.lib.units import inch, pica
 from reportlab.lib.pagesizes import letter
 import shutil
 import os
+import pathlib
 import json
 
 class Generator:
@@ -150,7 +151,9 @@ class Generator:
         print('Creating pdf...')
 
         # Initialize pdf document
-        doc = SimpleDocTemplate(cls.title, pagesize=letter, bottomMargin = 0.75 * inch)
+        pathlib.Path("applications").mkdir(exist_ok=True)
+        location = os.path.join('applications', cls.title)
+        doc = SimpleDocTemplate(location, pagesize=letter, bottomMargin = 0.75 * inch)
         Story = [Spacer(1,0*inch)]
         style = getSampleStyleSheet()['BodyText']
         style.fontSize = 11
@@ -177,7 +180,7 @@ class Generator:
 
         doc.build(Story)
 
-        path = os.path.join(os.getcwd(), cls.title)
+        path = os.path.join(os.getcwd(), 'applications', cls.title)
         print(f"Created pdf successfully: {path}\n")
     
     @classmethod

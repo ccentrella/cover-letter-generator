@@ -14,11 +14,31 @@ class Generator:
     def __init__(cls):
         cls.date = datetime.today()
         cls.graph_data = {}
+        cls.env = {}
         cls.heading_blocks = []
         cls.body_blocks = []
         cls.conclusion_blocks = []
         cls.line_character = None
         cls.title = None
+
+        cls.load_environment_variables()
+
+    @classmethod
+    def load_environment_variables(cls):
+        with open(".env", 'r', encoding="utf-8") as file:
+            dictionary = {}
+            for line in file.readlines():
+                comment_index = line.find('#')
+                equals_index = line.find('=')
+
+                if comment_index == -1:
+                    comment_index = len(line)
+                if equals_index > 0 and equals_index + 1 < comment_index:
+                    key = line[:equals_index].upper()
+                    value = line[equals_index + 1 : comment_index].replace('\n','')
+                    dictionary[key] = value
+
+            cls.env = dictionary
 
     @classmethod
     def create_document(cls):
@@ -66,7 +86,7 @@ class Generator:
         role = Generator.parse_role(role_input)
         platform = input("Optional: Where did you find this position?\n") or None
 
-        cls.load_file('formats/cover-letter.json')
+        cls.load_format('formats/cover-letter.json')
 
         heading_1 = f'{company} {cls.graph_data["heading"]}'
         heading_2 = cls.date.strftime("%m.%d.%y")
@@ -84,7 +104,8 @@ class Generator:
         body_5 = f'{cls.graph_data["body"]["line5"]}'
         body_6 = f'{cls.graph_data["body"]["line6"]["part1"]} {company} {cls.graph_data["body"]["line6"]["part2"]}'
 
-        complimentary_close = f'{cls.graph_data["complimentaryClose"]}'
+        complimentary_close = f'{cls.graph_data["complimentaryClose"]["part1"]} {cls.env["EMAIL"]} ' \
+        f'{cls.graph_data["complimentaryClose"]["part2"]} {cls.env["PHONE"]}. {cls.graph_data["complimentaryClose"]["part3"]}'
 
         signature = f'{cls.graph_data["signature"]}'
 
@@ -98,7 +119,7 @@ class Generator:
         role_input = input("Optional: What role are you applying for?\n").title()
         role = Generator.parse_role(role_input)
 
-        cls.load_file('formats/summary-long.json')
+        cls.load_format('formats/summary-long.json')
         body_1 = f'{cls.graph_data["body"]["line1"]["part1"]} {role}, {cls.graph_data["body"]["line1"]["part2"]}'
         body_2 = f'{cls.graph_data["body"]["line2"]}'
         body_3 = f'{cls.graph_data["body"]["line3"]}'
@@ -109,7 +130,7 @@ class Generator:
     
     @classmethod
     def prepare_medium_summary(cls):
-        cls.load_file('formats/summary-medium.json')
+        cls.load_format('formats/summary-medium.json')
         content = f'{cls.graph_data["body"]["line1"]}'
         
         cls.body_blocks = [content]   
@@ -117,7 +138,7 @@ class Generator:
     
     @classmethod
     def prepare_short_summary(cls):
-        cls.load_file('formats/summary-short.json')
+        cls.load_format('formats/summary-short.json')
         content = f'{cls.graph_data["body"]["line1"]}'
         
         cls.body_blocks = [content]
@@ -145,13 +166,13 @@ class Generator:
                 return "Full Stack Software Engineer"
             case default:
                 return role
-    
+
     @classmethod
-    def load_file(cls, file_location):
+    def load_format(cls, file_location):
         with open(file_location, 'r', encoding="utf-8") as file:
             data = file.read()
             cls.graph_data = json.loads(data)
-   
+    
     # Output document
     @classmethod
     def write_pdf(cls):

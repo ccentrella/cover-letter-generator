@@ -101,8 +101,7 @@ class Generator:
         body_2 = f'{cls.graph_data["body"]["line2"]["part1"]} {role}, {cls.graph_data["body"]["line2"]["part2"]}'
         body_3 = f'{cls.graph_data["body"]["line3"]}'
         body_4 = f'{cls.graph_data["body"]["line4"]}'
-        body_5 = f'{cls.graph_data["body"]["line5"]}'
-        body_6 = f'{cls.graph_data["body"]["line6"]["part1"]} {company} {cls.graph_data["body"]["line6"]["part2"]}'
+        body_5 = f'{cls.graph_data["body"]["line5"]["part1"]} {company} {cls.graph_data["body"]["line5"]["part2"]}'
 
         complimentary_close = f'{cls.graph_data["complimentaryClose"]["part1"]} {cls.env["EMAIL"]} ' \
         f'{cls.graph_data["complimentaryClose"]["part2"]} {cls.env["PHONE"]}. {cls.graph_data["complimentaryClose"]["part3"]}'
@@ -110,7 +109,7 @@ class Generator:
         signature = f'{cls.graph_data["signature"]}'
 
         cls.heading_blocks = [heading_1, heading_2]
-        cls.body_blocks = [salutation, body_1, body_2, body_3, body_4, body_5, body_6, complimentary_close]
+        cls.body_blocks = [salutation, body_1, body_2, body_3, body_4, body_5, complimentary_close]
         cls.conclusion_blocks = [signature]
         cls.title = f'cover_letter_cc_{company.lower()}_{cls.date.strftime("%m.%d.%y")}.pdf'
     
@@ -123,9 +122,8 @@ class Generator:
         body_1 = f'{cls.graph_data["body"]["line1"]["part1"]} {role}, {cls.graph_data["body"]["line1"]["part2"]}'
         body_2 = f'{cls.graph_data["body"]["line2"]}'
         body_3 = f'{cls.graph_data["body"]["line3"]}'
-        body_4 = f'{cls.graph_data["body"]["line4"]}'
 
-        cls.body_blocks = [body_1, body_2, body_3, body_4]
+        cls.body_blocks = [body_1, body_2, body_3]
         cls.title = f'summary_long_cc_{cls.date.isoformat()}.pdf'
     
     @classmethod

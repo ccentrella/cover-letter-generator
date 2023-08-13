@@ -10,21 +10,19 @@ import json
 
 class Generator:
 
-    @classmethod
-    def __init__(cls):
-        cls.date = datetime.today()
-        cls.graph_data = {}
-        cls.env = {}
-        cls.heading_blocks = []
-        cls.body_blocks = []
-        cls.conclusion_blocks = []
-        cls.line_character = None
-        cls.title = None
+    def __init__(self):
+        self.date = datetime.today()
+        self.graph_data = {}
+        self.env = {}
+        self.heading_blocks = []
+        self.body_blocks = []
+        self.conclusion_blocks = []
+        self.line_character = None
+        self.title = None
 
-        cls.load_environment_variables()
+        self.load_environment_variables()
 
-    @classmethod
-    def load_environment_variables(cls):
+    def load_environment_variables(self):
         with open(".env", 'r', encoding="utf-8") as file:
             dictionary = {}
             for line in file.readlines():
@@ -38,25 +36,24 @@ class Generator:
                     value = line[equals_index + 1 : comment_index].replace('\n','')
                     dictionary[key] = value
 
-            cls.env = dictionary
+            self.env = dictionary
 
-    @classmethod
-    def create_document(cls):
+    def create_document(self):
         create_pdf = False
         type = input("Which format would you like to use? Supported formats are cover letter, "
              "long summary, medium summary and short summary. Default is long summary.\n").lower()
         match type:
             case 'c' | 'cl'| 'l' | 'cover' | 'cover letter' | 'letter':
-                cls.prepare_cover_letter()
+                self.prepare_cover_letter()
                 create_pdf = True
             case 's' | 'ss' | 'short' | 'short summary' | 'summary short':
-                cls.prepare_short_summary()
+                self.prepare_short_summary()
             case 'm' | 'ms' | 'sm' | 'medium' | 'medium summary' | 'summary medium':
-                cls.prepare_medium_summary()
+                self.prepare_medium_summary()
             case default:
-                cls.prepare_long_summary()
+                self.prepare_long_summary()
 
-        cls.line_character = input("Optional: If you wish to use a line break character between paragraphs, enter it now.\n") or ''
+        self.line_character = input("Optional: If you wish to use a line break character between paragraphs, enter it now.\n") or ''
 
         if create_pdf:
             create_pdf_text = "Optional: Enter no to prevent generating a pdf.\n"
@@ -69,14 +66,13 @@ class Generator:
             create_pdf = False
 
         os.system('clear')
-        cls.write_terminal()
+        self.write_terminal()
 
         if create_pdf:
-            cls.write_pdf()
+            self.write_pdf()
 
-    # Prepare using specified format        
-    @classmethod
-    def prepare_cover_letter(cls):
+    # Prepare using specified format
+    def prepare_cover_letter(self):
         company = None
         while not company:
             company = input("What is the name of the company?\n")
@@ -86,61 +82,58 @@ class Generator:
         role = Generator.parse_role(role_input)
         platform = input("Optional: Where did you find this position?\n") or None
 
-        cls.load_format('formats/cover-letter.json')
+        self.load_format('formats/cover-letter.json')
 
-        heading_1 = f'{company} {cls.graph_data["heading"]}'
-        heading_2 = cls.date.strftime("%m.%d.%y")
+        heading_1 = f'{company} {self.graph_data["heading"]}'
+        heading_2 = self.date.strftime("%m.%d.%y")
 
-        salutation = f'{cls.graph_data["salutation"]} {hiring_manager},'
+        salutation = f'{self.graph_data["salutation"]} {hiring_manager},'
 
         if platform is None:
-            body_1 = f'{cls.graph_data["body"]["line1"]["part1"]} {role} {cls.graph_data["body"]["line1"]["part2"]} {company}.'
+            body_1 = f'{self.graph_data["body"]["line1"]["part1"]} {role} {self.graph_data["body"]["line1"]["part2"]} {company}.'
         else:
-            body_1 = f'{cls.graph_data["body"]["line1"]["part1"]} {role} {cls.graph_data["body"]["line1"]["part2"]} {company},'
+            body_1 = f'{self.graph_data["body"]["line1"]["part1"]} {role} {self.graph_data["body"]["line1"]["part2"]} {company},'
             f'which I found on {platform}.'
-        body_2 = f'{cls.graph_data["body"]["line2"]["part1"]} {role}, {cls.graph_data["body"]["line2"]["part2"]}'
-        body_3 = f'{cls.graph_data["body"]["line3"]}'
-        body_4 = f'{cls.graph_data["body"]["line4"]}'
-        body_5 = f'{cls.graph_data["body"]["line5"]["part1"]} {company} {cls.graph_data["body"]["line5"]["part2"]}'
+        body_2 = f'{self.graph_data["body"]["line2"]["part1"]} {role}, {self.graph_data["body"]["line2"]["part2"]}'
+        body_3 = f'{self.graph_data["body"]["line3"]}'
+        body_4 = f'{self.graph_data["body"]["line4"]}'
+        body_5 = f'{self.graph_data["body"]["line5"]["part1"]} {company} {self.graph_data["body"]["line5"]["part2"]}'
 
-        complimentary_close = f'{cls.graph_data["complimentaryClose"]["part1"]} {cls.env["EMAIL"]} ' \
-        f'{cls.graph_data["complimentaryClose"]["part2"]} {cls.env["PHONE"]}. {cls.graph_data["complimentaryClose"]["part3"]}'
+        complimentary_close = f'{self.graph_data["complimentaryClose"]["part1"]} {self.env["EMAIL"]} ' \
+        f'{self.graph_data["complimentaryClose"]["part2"]} {self.env["PHONE"]}. {self.graph_data["complimentaryClose"]["part3"]}'
 
-        signature = f'{cls.graph_data["signature"]}'
+        signature = f'{self.graph_data["signature"]}'
 
-        cls.heading_blocks = [heading_1, heading_2]
-        cls.body_blocks = [salutation, body_1, body_2, body_3, body_4, body_5, complimentary_close]
-        cls.conclusion_blocks = [signature]
-        cls.title = f'cover_letter_cc_{company.lower()}_{cls.date.strftime("%m.%d.%y")}.pdf'
-    
-    @classmethod
-    def prepare_long_summary(cls):
+        self.heading_blocks = [heading_1, heading_2]
+        self.body_blocks = [salutation, body_1, body_2, body_3, body_4, body_5, complimentary_close]
+        self.conclusion_blocks = [signature]
+        self.title = f'cover_letter_cc_{company.lower()}_{self.date.strftime("%m.%d.%y")}.pdf'
+
+    def prepare_long_summary(self):
         role_input = input("Optional: What role are you applying for?\n").title()
         role = Generator.parse_role(role_input)
 
-        cls.load_format('formats/summary-long.json')
-        body_1 = f'{cls.graph_data["body"]["line1"]["part1"]} {role}, {cls.graph_data["body"]["line1"]["part2"]}'
-        body_2 = f'{cls.graph_data["body"]["line2"]}'
-        body_3 = f'{cls.graph_data["body"]["line3"]}'
+        self.load_format('formats/summary-long.json')
+        body_1 = f'{self.graph_data["body"]["line1"]["part1"]} {role}, {self.graph_data["body"]["line1"]["part2"]}'
+        body_2 = f'{self.graph_data["body"]["line2"]}'
+        body_3 = f'{self.graph_data["body"]["line3"]}'
 
-        cls.body_blocks = [body_1, body_2, body_3]
-        cls.title = f'summary_long_cc_{cls.date.isoformat()}.pdf'
-    
-    @classmethod
-    def prepare_medium_summary(cls):
-        cls.load_format('formats/summary-medium.json')
-        content = f'{cls.graph_data["body"]["line1"]}'
+        self.body_blocks = [body_1, body_2, body_3]
+        self.title = f'summary_long_cc_{self.date.isoformat()}.pdf'
+
+    def prepare_medium_summary(self):
+        self.load_format('formats/summary-medium.json')
+        content = f'{self.graph_data["body"]["line1"]}'
         
-        cls.body_blocks = [content]   
-        cls.title = f'summary_medium_cc_{cls.date.isoformat()}.pdf'
-    
-    @classmethod
-    def prepare_short_summary(cls):
-        cls.load_format('formats/summary-short.json')
-        content = f'{cls.graph_data["body"]["line1"]}'
+        self.body_blocks = [content]   
+        self.title = f'summary_medium_cc_{self.date.isoformat()}.pdf'
+
+    def prepare_short_summary(self):
+        self.load_format('formats/summary-short.json')
+        content = f'{self.graph_data["body"]["line1"]}'
         
-        cls.body_blocks = [content]
-        cls.title = f'summary_short_cc_{cls.date.isoformat()}.pdf'
+        self.body_blocks = [content]
+        self.title = f'summary_short_cc_{self.date.isoformat()}.pdf'
 
     @staticmethod
     def parse_role(role):
@@ -165,21 +158,19 @@ class Generator:
             case default:
                 return role
 
-    @classmethod
-    def load_format(cls, file_location):
+    def load_format(self, file_location):
         with open(file_location, 'r', encoding="utf-8") as file:
             data = file.read()
-            cls.graph_data = json.loads(data)
+            self.graph_data = json.loads(data)
     
     # Output document
-    @classmethod
-    def write_pdf(cls):
+    def write_pdf(self):
         Generator.print_line()
         print('Creating pdf...')
 
         # Initialize pdf document
         pathlib.Path("applications").mkdir(exist_ok=True)
-        location = os.path.join('applications', cls.title)
+        location = os.path.join('applications', self.title)
         doc = SimpleDocTemplate(location, pagesize=letter, bottomMargin = 0.75 * inch)
         Story = [Spacer(1,0*inch)]
         style = getSampleStyleSheet()['BodyText']
@@ -188,50 +179,49 @@ class Generator:
         style.spaceAfter = 0.75 * pica
 
         # Add content to file
-        for block in cls.heading_blocks:
+        for block in self.heading_blocks:
             p = Paragraph(block, style)
             Story.append(p)
         Story.append(Spacer(1, 1*pica))
 
         style.spaceAfter = 1.25 * pica
-        for block in cls.body_blocks:
+        for block in self.body_blocks:
             p = Paragraph(block, style)
             Story.append(p)
-            Story.append(Paragraph(cls.line_character))
+            Story.append(Paragraph(self.line_character))
         Story.append(Spacer(1, 1*pica))
 
         style.spaceAfter = 0.75 * pica
-        for block in cls.conclusion_blocks:
+        for block in self.conclusion_blocks:
             p = Paragraph(block, style)
             Story.append(p)
 
         doc.build(Story)
 
-        path = os.path.join(os.getcwd(), 'applications', cls.title)
+        path = os.path.join(os.getcwd(), 'applications', self.title)
         print(f"Created pdf successfully: {path}\n")
-    
-    @classmethod
-    def write_terminal(cls):
+
+    def write_terminal(self):
         print("Outputting to terminal...\n")
         Generator.print_line()
         os.system('clear')
         print()
 
-        for block in cls.heading_blocks:
+        for block in self.heading_blocks:
             print(block)
-            print(cls.line_character)
-        if len(cls.heading_blocks) > 0:
+            print(self.line_character)
+        if len(self.heading_blocks) > 0:
             print()
 
-        for block in cls.body_blocks:
+        for block in self.body_blocks:
             print(block)
-            print(cls.line_character)
+            print(self.line_character)
         print()
 
-        for block in cls.conclusion_blocks:
+        for block in self.conclusion_blocks:
             print(block)
-            print(cls.line_character)
-        if len(cls.conclusion_blocks) > 0:
+            print(self.line_character)
+        if len(self.conclusion_blocks) > 0:
             print()
 
     @staticmethod
